@@ -1,4 +1,11 @@
 import styled from "styled-components";
+import { formatCurrency } from "../../utils/helpers";
+import Spinner from "../../ui/Spinner";
+import { useState } from "react";
+import CreateCabinForm from "./CreateCabinForm";
+import useDeleteCabin from "./useDeleteCabin";
+import { HiPencil, HiSquare2Stack, HiTrash } from "react-icons/hi2";
+import useCreateCabin from "./useCreateCabin";
 
 const TableRow = styled.div`
   display: grid;
@@ -38,3 +45,56 @@ const Discount = styled.div`
   font-weight: 500;
   color: var(--color-green-700);
 `;
+
+function CabinRow({ cabin }) {
+  const [showForm, setShowForm] = useState(false);
+  const { id, image, name, maxCapacity, regularPrice, discount } = cabin;
+
+  const { isDeleting, deleteCabin } = useDeleteCabin();
+  const { isCreateLoading, createCabin } = useCreateCabin();
+
+  function handleDuplicate() {
+    const cabinToDuplicate = { ...cabin, id: undefined, name: "Copy " + name };
+    createCabin(cabinToDuplicate);
+  }
+
+  return (
+    <>
+      {(isCreateLoading || isDeleting) && <Spinner />}
+      <TableRow role="row">
+        <Img src={image} alt={name} />
+        <Cabin>{name}</Cabin>
+        <div>Fits up to {maxCapacity} guests</div>
+        <Price>{formatCurrency(regularPrice)}</Price>
+        {discount > 0 ? (
+          <Discount>{formatCurrency(discount)}</Discount>
+        ) : (
+          <span>&mdash;</span>
+        )}
+        <div>
+          <button onClick={handleDuplicate}>
+            <HiSquare2Stack />
+          </button>
+          <button onClick={() => setShowForm((show) => !show)}>
+            <HiPencil />
+          </button>
+          <button onClick={() => deleteCabin(id)} disabled={isDeleting}>
+            <HiTrash />
+          </button>
+        </div>
+        {(isCreateLoading || isDeleting) && <Spinner />}
+      </TableRow>
+
+      {showForm && (
+        <div>
+          <CreateCabinForm
+            cabinToEdit={cabin}
+            onClose={() => setShowForm(false)}
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
+export default CabinRow;
