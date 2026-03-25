@@ -5,6 +5,8 @@ import useCabins from "./useCabins";
 import Table from "./../../ui/Table";
 import Row from "./../../ui/Row";
 import Menus from "../../ui/Menus";
+import { useSearchParams } from "react-router-dom";
+import Empty from "../../ui/Empty";
 
 const TableHeader = styled.header`
   display: grid;
@@ -23,8 +25,34 @@ const TableHeader = styled.header`
 
 function CabinTable() {
   const { data: cabins, isLoading } = useCabins();
+  const [searchParams] = useSearchParams();
 
   if (isLoading) return <Spinner />;
+
+  if (!cabins || cabins.length === 0) return <Empty resourceName="cabins" />;
+
+  const discountFilter = searchParams.get("discount") || "all";
+
+  let filteredCabins = cabins;
+  if (discountFilter === "with-discount") {
+    filteredCabins = filteredCabins.filter((cabin) => cabin.discount > 0);
+  } else if (discountFilter === "no-discount") {
+    filteredCabins = filteredCabins.filter((cabin) => cabin.discount === 0);
+  }
+
+  const sortBy = searchParams.get("sortBy") || "name-asc";
+  const [field, direction] = sortBy.split("-");
+  const modifier = direction === "asc" ? 1 : -1;
+
+  let sortedCabins = [...filteredCabins];
+
+  if (field === "name") {
+    sortedCabins.sort((a, b) => a.name.localeCompare(b.name) * modifier);
+  } else if (field === "price") {
+    sortedCabins.sort((a, b) => (a.price - b.price) * modifier);
+  } else if (field === "capacity") {
+    sortedCabins.sort((a, b) => (a.capacity - b.capacity) * modifier);
+  }
 
   return (
     <Menus>
@@ -38,7 +66,7 @@ function CabinTable() {
           <div></div>
         </Table.Header>
         <Table.Body
-          data={cabins}
+          data={sortedCabins}
           render={(cabin) => <CabinRow key={cabin.id} cabin={cabin} />}
         />
       </Table>
