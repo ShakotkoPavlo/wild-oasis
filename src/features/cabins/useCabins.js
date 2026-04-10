@@ -11,5 +11,5 @@ export default function useCabins() {
     queryFn: getCabins,
   });
 
-  return { data: cabins, isLoading, error };
+  return { cabins, isLoading, error };
 }
